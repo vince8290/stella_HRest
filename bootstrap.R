@@ -11,28 +11,17 @@ outfolder = file.path(rootfolder,format(Sys.time(), "%Y%m%d_%H%M%S"))  # outfold
 raw_ext = "csv"  # raw_ext: Raw datafiles extension ("csv", "tsv", "txt") WITHOUT the dot (.)
 sep = ","   # column separator for raw data files (";" or "," or "\t")
 dec = "."   # decimal character for raw data files("." or ",")
-required_packages = c("tidyverse","tools","RColorBrewer","devtools", "rlang", "besthr")
+required_packages = c("tidyverse","tools","RColorBrewer","devtools", "rlang", "besthr","cowplot")
 nits = 1000 # A number of bootstrap iteration (default = 1000)
-
 #---------------------------------------------------------------------------------------------
 # Graphics parameters
-labels <- c(0.0,0.1, 0.25, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 10.0,15.0,20.0,25.0,30.0)
 graph_unit = "cm"   # unit for graphs sizes ("cm", "in" or "mm" )
-
 graph_dpi = 600     # graph resolution (typically between 100 and 1200)
 plot_device = "png" # graph file extension
-
-#---------------------------------------------------------------------------------------------
-# Data Transformation (pick one)
-# Transform the data for statistical analyses (choose below which transformation is best suited)
-# trans <- function(x) x # No transformation (raw data)
-# trans <- function(x) x^0.5 # Power Transformation
-# trans <- log10 # Log10 Transformation
-trans <- log2 # Log2 Transformation
 #---------------------------------------------------------------------------------------------
 
 # show current palette colours
-scales::show_col(scales::hue_pal()(9))
+# scales::show_col(scales::hue_pal()(9))
 
 ##############################################################################################
 # the "dot_plot" and "plot_hrest" functions from https://rdrr.io/github/TeamMacLean/besthr/
@@ -156,7 +145,17 @@ for (i in 1:length(filelist)){
     separate(col=key, into=c("treatment","rep"), sep=1)
   
   # translate treatment names
-  scores$treatment <- str_replace_all(scores$treatment, c("A"="0", "B"="0.02", "C"="0.05", "D"="0.1", "E"="0.2", "F" = "0.5") )
+
+  if (f=="RGA4 strong.csv") {
+    scores$treatment <- str_replace_all(scores$treatment, c("A"="0", "B"="0.1", "C"="0.2", "D"="0.3", "E"="0.4", "F" = "0.5", "G" = "0.6") )
+    print(c("A"="0", "B"="0.1", "C"="0.2", "D"="0.3", "E"="0.4", "F" = "0.5", "G" = "0.6"))
+    }  else {
+      
+    scores$treatment <- str_replace_all(scores$treatment, c("A"="0", "B"="0.02", "C"="0.05", "D"="0.1", "E"="0.2", "F" = "0.5") )
+    print(c("A"="0", "B"="0.02", "C"="0.05", "D"="0.1", "E"="0.2", "F" = "0.5"))
+    
+  }
+  
   
   scores$treatment = factor(scores$treatment)
   scores$rep = factor(scores$rep)
@@ -177,10 +176,10 @@ for (i in 1:length(filelist)){
   
   # dotplots
   windows(15,20)
-  graph_width = 22    # graph width
+  graph_width = ifelse(f=="RGA4 strong.csv",25,22)   # graph width
   graph_height = 40   # graph height
   
-  
+
   ggplot(data=scores,aes(x=treatment, y=value,  color=treatment)) +
     geom_count(alpha=0.3, aes(color=treatment)) +
     geom_jitter(size=1, alpha=0.9, width=0.3, height=0.15, aes(pch=rep, color=rep))+
@@ -227,7 +226,7 @@ for (i in 1:length(filelist)){
   
   ##############################################################################################
   # calculate bootstrap HR object creation
-  hr <- estimate(scores, value, treatment,  rep, control=0, nits=1000)
+  hr <- estimate(scores, value, treatment,  rep, control=0, nits=nits)
   hr
   
   
